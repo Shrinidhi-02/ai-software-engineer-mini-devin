@@ -2,11 +2,10 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Mini Devin",
-    page_icon="🤖",
     layout="wide"
 )
 
-st.title("🤖 AI Software Engineer - Mini Devin")
+st.title(" AI Software Engineer - Mini Devin")
 
 st.write(
     "Give the AI a software development task and "
