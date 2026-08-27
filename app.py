@@ -1,93 +1,99 @@
 import streamlit as st
 
-from ai_engine import ask_ai
+from planner import create_project_plan
+
+
+# --------------------------------------------------
+# Page Configuration
+# --------------------------------------------------
 
 st.set_page_config(
     page_title="Mini Devin",
     layout="wide"
 )
 
+
+# --------------------------------------------------
+# Header
+# --------------------------------------------------
+
 st.title("AI Software Engineer - Mini Devin")
 
 st.write(
     "Mini Devin is an AI-powered software engineering "
-    "assistant that helps analyze software development tasks."
+    "assistant that analyzes software requirements "
+    "and creates structured development plans."
 )
 
 st.divider()
 
-st.subheader("Software Development Task")
+
+# --------------------------------------------------
+# Project Requirement
+# --------------------------------------------------
+
+st.subheader("Software Development Requirement")
 
 task = st.text_area(
-    "Enter your task:",
+    "Describe the project you want to build:",
     placeholder=(
-        "Example: Create a Python calculator application "
-        "with addition, subtraction, multiplication and division."
+        "Example: Build a Python expense tracker "
+        "that stores expenses, calculates monthly "
+        "spending and displays charts."
     ),
-    height=150
+    height=180
 )
 
-if st.button("Ask Mini Devin"):
+
+# --------------------------------------------------
+# Project Planner
+# --------------------------------------------------
+
+if st.button("Create Project Plan"):
 
     if not task.strip():
 
         st.warning(
-            "Please enter a software development task."
+            "Please describe your project requirement."
         )
 
     else:
 
-        st.subheader("Your Task")
+        st.subheader("Your Requirement")
 
         st.code(task)
 
-        prompt = f"""
-You are Mini Devin, an AI Software Engineer.
-
-The user has provided this software development task:
-
-{task}
-
-Analyze the requirement and provide:
-
-1. A clear understanding of the requirement.
-2. A simple development plan.
-3. Python libraries that may be useful.
-4. The files that may be required.
-5. A simple explanation of how the project can be implemented.
-
-Use Python only.
-
-Do not use JavaScript, HTML or CSS.
-
-Keep the explanation beginner-friendly.
-"""
-
+        # Generate project plan
         with st.spinner(
-            "Mini Devin is thinking..."
+            "Mini Devin is creating your project plan..."
         ):
 
             try:
 
-                response = ask_ai(prompt)
+                project_plan = create_project_plan(task)
 
                 st.success(
-                    "AI response generated successfully!"
+                    "Project plan generated successfully!"
                 )
 
                 st.subheader(
-                    "Mini Devin Response"
+                    "Mini Devin Project Plan"
                 )
 
-                st.write(response)
+                st.markdown(project_plan)
 
             except Exception as error:
 
                 st.error(
-                    "Unable to connect to the AI."
+                    "Unable to generate the project plan."
                 )
 
                 st.code(str(error))
+
+
+# --------------------------------------------------
+# Footer
+# --------------------------------------------------
 
 st.divider()
 

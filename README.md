@@ -89,31 +89,19 @@ Final Result
 mini-devin/
 │
 ├── .venv/
-│
 ├── workspace/
-│   └── AI-generated projects
-│
-├── data/
-│   └── Application database
-│
-├── app.py
-├── ai_engine.py
-├── planner.py
-├── file_manager.py
-├── executor.py
-├── agent.py
-├── db.py
-├── config.py
-├── utils.py
-│
-├── tests/
-│   └── Project tests
 │
 ├── .env
 ├── .env.example
 ├── .gitignore
-├── requirements.txt
-└── README.md
+│
+├── app.py
+├── ai_engine.py
+├── config.py
+├── planner.py
+│
+├── README.md
+└── requirements.txt
 ```
 
 ## Installation
