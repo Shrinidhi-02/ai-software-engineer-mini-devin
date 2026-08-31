@@ -11,7 +11,6 @@ from file_manager import create_project_files
 
 st.set_page_config(
     page_title="Mini Devin",
-    page_icon="🤖",
     layout="wide"
 )
 
@@ -20,7 +19,7 @@ st.set_page_config(
 # Header
 # --------------------------------------------------
 
-st.title("🤖 AI Software Engineer - Mini Devin")
+st.title("AI Software Engineer - Mini Devin")
 
 st.write(
     "Mini Devin is an AI-powered software engineering "
@@ -35,7 +34,7 @@ st.divider()
 # User Requirement
 # --------------------------------------------------
 
-st.subheader("📝 Software Development Requirement")
+st.subheader("Software Development Requirement")
 
 task = st.text_area(
     "Describe the project you want to build:",
@@ -51,7 +50,7 @@ task = st.text_area(
 # Build Project
 # --------------------------------------------------
 
-if st.button("🚀 Build Python Project"):
+if st.button("Build Python Project"):
 
     if not task.strip():
 
@@ -66,7 +65,7 @@ if st.button("🚀 Build Python Project"):
         # --------------------------------------------------
 
         with st.spinner(
-            "🤖 Creating project plan..."
+            "Creating project plan..."
         ):
 
             try:
@@ -88,7 +87,7 @@ if st.button("🚀 Build Python Project"):
             "Project plan created successfully!"
         )
 
-        with st.expander("📋 View Project Plan"):
+        with st.expander("View Project Plan"):
 
             st.markdown(project_plan)
 
@@ -98,7 +97,7 @@ if st.button("🚀 Build Python Project"):
         # --------------------------------------------------
 
         with st.spinner(
-            "🐍 Generating Python project..."
+            "Generating Python project..."
         ):
 
             try:
@@ -128,7 +127,7 @@ if st.button("🚀 Build Python Project"):
         # Display Generated Code
         # --------------------------------------------------
 
-        with st.expander("🐍 View Generated Python Code"):
+        with st.expander("View Generated Python Code"):
 
             st.markdown(generated_code)
 
@@ -138,7 +137,7 @@ if st.button("🚀 Build Python Project"):
         # --------------------------------------------------
 
         with st.spinner(
-            "📁 Creating project files..."
+            "Creating project files..."
         ):
 
             try:
@@ -169,12 +168,12 @@ if st.button("🚀 Build Python Project"):
                 "Project files created successfully!"
             )
 
-            st.subheader("📁 Created Files")
+            st.subheader("Created Files")
 
             for file_path in created_files:
 
                 st.write(
-                    f"✅ `{file_path}`"
+                    f" `{file_path}`"
                 )
 
         else:
