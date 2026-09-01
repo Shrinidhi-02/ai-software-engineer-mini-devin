@@ -1,13 +1,11 @@
 import streamlit as st
+from pathlib import Path
 
 from planner import create_project_plan
 from code_generator import generate_python_project
 from file_manager import create_project_files
+from executor import run_python_file
 
-
-# --------------------------------------------------
-# Page Configuration
-# --------------------------------------------------
 
 st.set_page_config(
     page_title="Mini Devin",
@@ -15,24 +13,15 @@ st.set_page_config(
 )
 
 
-# --------------------------------------------------
-# Header
-# --------------------------------------------------
-
 st.title("AI Software Engineer - Mini Devin")
 
 st.write(
-    "Mini Devin is an AI-powered software engineering "
-    "assistant that analyzes requirements, creates project "
-    "plans, generates Python code, and creates project files."
+    "Mini Devin analyzes requirements, creates project plans, "
+    "generates Python code, creates files, and executes projects."
 )
 
 st.divider()
 
-
-# --------------------------------------------------
-# User Requirement
-# --------------------------------------------------
 
 st.subheader("Software Development Requirement")
 
@@ -46,11 +35,7 @@ task = st.text_area(
 )
 
 
-# --------------------------------------------------
-# Build Project
-# --------------------------------------------------
-
-if st.button("Build Python Project"):
+if st.button("Build and Run Python Project"):
 
     if not task.strip():
 
@@ -60,13 +45,11 @@ if st.button("Build Python Project"):
 
     else:
 
-        # --------------------------------------------------
+        # ------------------------------------------
         # Project Planning
-        # --------------------------------------------------
+        # ------------------------------------------
 
-        with st.spinner(
-            "Creating project plan..."
-        ):
+        with st.spinner("Creating project plan..."):
 
             try:
 
@@ -88,17 +71,14 @@ if st.button("Build Python Project"):
         )
 
         with st.expander("View Project Plan"):
-
             st.markdown(project_plan)
 
 
-        # --------------------------------------------------
+        # ------------------------------------------
         # Code Generation
-        # --------------------------------------------------
+        # ------------------------------------------
 
-        with st.spinner(
-            "Generating Python project..."
-        ):
+        with st.spinner("Generating Python project..."):
 
             try:
 
@@ -122,23 +102,15 @@ if st.button("Build Python Project"):
             "Python project generated successfully!"
         )
 
-
-        # --------------------------------------------------
-        # Display Generated Code
-        # --------------------------------------------------
-
-        with st.expander("View Generated Python Code"):
-
+        with st.expander("View Generated Code"):
             st.markdown(generated_code)
 
 
-        # --------------------------------------------------
-        # Create Project Files
-        # --------------------------------------------------
+        # ------------------------------------------
+        # File Creation
+        # ------------------------------------------
 
-        with st.spinner(
-            "Creating project files..."
-        ):
+        with st.spinner("Creating project files..."):
 
             try:
 
@@ -158,34 +130,101 @@ if st.button("Build Python Project"):
                 st.stop()
 
 
-        # --------------------------------------------------
-        # Display Created Files
-        # --------------------------------------------------
+        if not created_files:
 
-        if created_files:
-
-            st.success(
-                "Project files created successfully!"
+            st.warning(
+                "No project files were created."
             )
 
-            st.subheader("Created Files")
+            st.stop()
 
-            for file_path in created_files:
 
-                st.write(
-                    f" `{file_path}`"
+        st.success(
+            "Project files created successfully!"
+        )
+
+        st.subheader("Created Files")
+
+        for file_path in created_files:
+            st.write(f"`{file_path}`")
+
+
+        # ------------------------------------------
+        # Find Entry File
+        # ------------------------------------------
+
+        main_file = Path("workspace/main.py")
+
+        if not main_file.exists():
+
+            python_files = [
+                Path(file_path)
+                for file_path in created_files
+                if str(file_path).endswith(".py")
+            ]
+
+            if python_files:
+                main_file = python_files[0]
+
+            else:
+                st.warning(
+                    "No Python file was found to execute."
+                )
+
+                st.stop()
+
+
+        # ------------------------------------------
+        # Execute Python Project
+        # ------------------------------------------
+
+        st.subheader("Execution Result")
+
+        with st.spinner("Running generated Python code..."):
+
+            execution_result = run_python_file(
+                main_file
+            )
+
+
+        if execution_result["success"]:
+
+            st.success(
+                "Python project executed successfully!"
+            )
+
+            if execution_result["stdout"]:
+
+                st.subheader("Output")
+
+                st.code(
+                    execution_result["stdout"]
+                )
+
+            else:
+
+                st.info(
+                    "The program finished successfully "
+                    "but did not produce console output."
                 )
 
         else:
 
-            st.warning(
-                "No project files were detected."
+            st.error(
+                "The generated project produced an error."
             )
 
+            st.subheader("Error")
 
-# --------------------------------------------------
-# Footer
-# --------------------------------------------------
+            st.code(
+                execution_result["stderr"]
+            )
+
+            st.write(
+                "This error will later be sent back "
+                "to the AI debugging module."
+            )
+
 
 st.divider()
 
