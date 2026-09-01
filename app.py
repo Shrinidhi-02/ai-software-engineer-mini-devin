@@ -5,6 +5,7 @@ from planner import create_project_plan
 from code_generator import generate_python_project
 from file_manager import create_project_files
 from executor import run_python_file
+from debugger import fix_python_project
 
 
 st.set_page_config(
@@ -17,7 +18,8 @@ st.title("AI Software Engineer - Mini Devin")
 
 st.write(
     "Mini Devin analyzes requirements, creates project plans, "
-    "generates Python code, creates files, and executes projects."
+    "generates Python code, creates files, executes projects "
+    "and attempts to fix execution errors automatically."
 )
 
 st.divider()
@@ -35,7 +37,7 @@ task = st.text_area(
 )
 
 
-if st.button("Build and Run Python Project"):
+if st.button("Build Python Project"):
 
     if not task.strip():
 
@@ -44,10 +46,6 @@ if st.button("Build and Run Python Project"):
         )
 
     else:
-
-        # ------------------------------------------
-        # Project Planning
-        # ------------------------------------------
 
         with st.spinner("Creating project plan..."):
 
@@ -71,12 +69,8 @@ if st.button("Build and Run Python Project"):
         )
 
         with st.expander("View Project Plan"):
+
             st.markdown(project_plan)
-
-
-        # ------------------------------------------
-        # Code Generation
-        # ------------------------------------------
 
         with st.spinner("Generating Python project..."):
 
@@ -103,12 +97,8 @@ if st.button("Build and Run Python Project"):
         )
 
         with st.expander("View Generated Code"):
+
             st.markdown(generated_code)
-
-
-        # ------------------------------------------
-        # File Creation
-        # ------------------------------------------
 
         with st.spinner("Creating project files..."):
 
@@ -146,12 +136,10 @@ if st.button("Build and Run Python Project"):
         st.subheader("Created Files")
 
         for file_path in created_files:
-            st.write(f"`{file_path}`")
 
-
-        # ------------------------------------------
-        # Find Entry File
-        # ------------------------------------------
+            st.write(
+                f"`{file_path}`"
+            )
 
         main_file = Path("workspace/main.py")
 
@@ -164,23 +152,20 @@ if st.button("Build and Run Python Project"):
             ]
 
             if python_files:
+
                 main_file = python_files[0]
 
             else:
+
                 st.warning(
                     "No Python file was found to execute."
                 )
 
                 st.stop()
 
-
-        # ------------------------------------------
-        # Execute Python Project
-        # ------------------------------------------
-
         st.subheader("Execution Result")
 
-        with st.spinner("Running generated Python code..."):
+        with st.spinner("Running generated project..."):
 
             execution_result = run_python_file(
                 main_file
@@ -190,40 +175,112 @@ if st.button("Build and Run Python Project"):
         if execution_result["success"]:
 
             st.success(
-                "Python project executed successfully!"
+                "Project executed successfully!"
             )
 
             if execution_result["stdout"]:
-
-                st.subheader("Output")
 
                 st.code(
                     execution_result["stdout"]
                 )
 
-            else:
-
-                st.info(
-                    "The program finished successfully "
-                    "but did not produce console output."
-                )
-
         else:
 
             st.error(
-                "The generated project produced an error."
+                "Execution failed."
             )
 
-            st.subheader("Error")
+            st.subheader("Detected Error")
 
             st.code(
                 execution_result["stderr"]
             )
 
-            st.write(
-                "This error will later be sent back "
-                "to the AI debugging module."
+            with st.spinner(
+                "Mini Devin is fixing the error..."
+            ):
+
+                try:
+
+                    fixed_code = fix_python_project(
+                        task,
+                        generated_code,
+                        execution_result["stderr"]
+                    )
+
+                except Exception as error:
+
+                    st.error(
+                        "AI debugging failed."
+                    )
+
+                    st.code(str(error))
+
+                    st.stop()
+
+
+            st.success(
+                "AI generated a corrected project."
             )
+
+            with st.expander(
+                "View Corrected Code"
+            ):
+
+                st.markdown(fixed_code)
+
+            with st.spinner(
+                "Updating project files..."
+            ):
+
+                fixed_files = create_project_files(
+                    fixed_code,
+                    "workspace"
+                )
+
+
+            st.success(
+                "Project files updated."
+            )
+            
+            with st.spinner(
+                "Running corrected project..."
+            ):
+
+                second_result = run_python_file(
+                    main_file
+                )
+
+
+            if second_result["success"]:
+
+                st.success(
+                    "Mini Devin fixed the project successfully!"
+                )
+
+                if second_result["stdout"]:
+
+                    st.subheader(
+                        "Final Output"
+                    )
+
+                    st.code(
+                        second_result["stdout"]
+                    )
+
+            else:
+
+                st.error(
+                    "The project still contains an error."
+                )
+
+                st.subheader(
+                    "Remaining Error"
+                )
+
+                st.code(
+                    second_result["stderr"]
+                )
 
 
 st.divider()
