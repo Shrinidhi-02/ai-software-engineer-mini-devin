@@ -1,12 +1,13 @@
 import streamlit as st
-from pathlib import Path
 
-from planner import create_project_plan
-from code_generator import generate_python_project
-from file_manager import create_project_files
-from executor import run_python_file
-from debugger import fix_python_project
+from agent import run_agent
+from database import create_tables
+from analytics import get_task_dataframe, create_status_chart
 
+
+# --------------------------------------------------
+# Page Configuration
+# --------------------------------------------------
 
 st.set_page_config(
     page_title="Mini Devin",
@@ -14,274 +15,304 @@ st.set_page_config(
 )
 
 
+# --------------------------------------------------
+# Database
+# --------------------------------------------------
+
+create_tables()
+
+
+# --------------------------------------------------
+# Header
+# --------------------------------------------------
+
 st.title("AI Software Engineer - Mini Devin")
 
 st.write(
-    "Mini Devin analyzes requirements, creates project plans, "
-    "generates Python code, creates files, executes projects "
-    "and attempts to fix execution errors automatically."
+    "Mini Devin analyzes software requirements, creates project plans, "
+    "generates Python code, creates files, executes projects, "
+    "and attempts to fix errors automatically."
 )
 
 st.divider()
 
 
-st.subheader("Software Development Requirement")
+# --------------------------------------------------
+# Navigation
+# --------------------------------------------------
 
-task = st.text_area(
-    "Describe the project you want to build:",
-    placeholder=(
-        "Example: Create a Python calculator application "
-        "with addition, subtraction, multiplication and division."
-    ),
-    height=180
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "Software Engineer",
+        "Project History",
+        "Analytics"
+    ]
 )
 
 
-if st.button("Build Python Project"):
+# ==================================================
+# SOFTWARE ENGINEER
+# ==================================================
 
-    if not task.strip():
+if page == "Software Engineer":
 
-        st.warning(
-            "Please describe your project requirement."
+    st.subheader("Software Development Requirement")
+
+    task = st.text_area(
+        "Describe the project you want to build:",
+        placeholder=(
+            "Example: Create a Python calculator application "
+            "with addition, subtraction, multiplication and division."
+        ),
+        height=180
+    )
+
+
+    if st.button("Build Python Project"):
+
+        if not task.strip():
+
+            st.warning(
+                "Please describe your project requirement."
+            )
+
+        else:
+
+            with st.spinner(
+                "Mini Devin is working on your project..."
+            ):
+
+                result = run_agent(task)
+
+
+            # ------------------------------------------
+            # Project Plan
+            # ------------------------------------------
+
+            if result["project_plan"]:
+
+                st.success(
+                    "Project plan created."
+                )
+
+                with st.expander(
+                    "📋 View Project Plan"
+                ):
+
+                    st.markdown(
+                        result["project_plan"]
+                    )
+
+
+            # ------------------------------------------
+            # Generated Code
+            # ------------------------------------------
+
+            if result["generated_code"]:
+
+                st.success(
+                    "Python code generated."
+                )
+
+                with st.expander(
+                    "View Generated Code"
+                ):
+
+                    st.markdown(
+                        result["generated_code"]
+                    )
+
+
+            # ------------------------------------------
+            # Created Files
+            # ------------------------------------------
+
+            if result["created_files"]:
+
+                st.subheader(
+                    "Created Files"
+                )
+
+                for file_path in result["created_files"]:
+
+                    st.write(
+                        f"`{file_path}`"
+                    )
+
+
+            # ------------------------------------------
+            # Final Result
+            # ------------------------------------------
+
+            if result["success"]:
+
+                st.success(
+                    "🎉 Project completed successfully!"
+                )
+
+                st.write(
+                    f"Execution attempts: {result['attempts']}"
+                )
+
+                if result["output"]:
+
+                    st.subheader(
+                        "📤 Output"
+                    )
+
+                    st.code(
+                        result["output"]
+                    )
+
+                else:
+
+                    st.info(
+                        "The project executed successfully "
+                        "but produced no console output."
+                    )
+
+            else:
+
+                st.error(
+                    "Mini Devin could not complete the project."
+                )
+
+                if result["error"]:
+
+                    st.subheader(
+                        "🐛 Error"
+                    )
+
+                    st.code(
+                        result["error"]
+                    )
+
+                st.write(
+                    f"Execution attempts: {result['attempts']}"
+                )
+
+
+# ==================================================
+# PROJECT HISTORY
+# ==================================================
+
+elif page == "Project History":
+
+    st.subheader(
+        "Project History"
+    )
+
+    dataframe = get_task_dataframe()
+
+    if dataframe.empty:
+
+        st.info(
+            "No project history available yet."
         )
 
     else:
 
-        with st.spinner("Creating project plan..."):
-
-            try:
-
-                project_plan = create_project_plan(task)
-
-            except Exception as error:
-
-                st.error(
-                    "Unable to create the project plan."
-                )
-
-                st.code(str(error))
-
-                st.stop()
-
-
-        st.success(
-            "Project plan created successfully!"
+        st.dataframe(
+            dataframe,
+            use_container_width=True
         )
 
-        with st.expander("View Project Plan"):
 
-            st.markdown(project_plan)
+# ==================================================
+# ANALYTICS
+# ==================================================
 
-        with st.spinner("Generating Python project..."):
+elif page == "Analytics":
 
-            try:
+    st.subheader(
+        "Mini Devin Analytics"
+    )
 
-                generated_code = generate_python_project(
-                    task,
-                    project_plan
-                )
+    dataframe = get_task_dataframe()
 
-            except Exception as error:
+    if dataframe.empty:
 
-                st.error(
-                    "Unable to generate the Python project."
-                )
-
-                st.code(str(error))
-
-                st.stop()
-
-
-        st.success(
-            "Python project generated successfully!"
+        st.info(
+            "No data available for analytics yet."
         )
 
-        with st.expander("View Generated Code"):
+    else:
 
-            st.markdown(generated_code)
+        total_tasks = len(dataframe)
 
-        with st.spinner("Creating project files..."):
-
-            try:
-
-                created_files = create_project_files(
-                    generated_code,
-                    "workspace"
+        completed_tasks = len(
+            dataframe[
+                dataframe["status"].isin(
+                    [
+                        "Completed",
+                        "Fixed Successfully"
+                    ]
                 )
-
-            except Exception as error:
-
-                st.error(
-                    "Unable to create project files."
-                )
-
-                st.code(str(error))
-
-                st.stop()
-
-
-        if not created_files:
-
-            st.warning(
-                "No project files were created."
-            )
-
-            st.stop()
-
-
-        st.success(
-            "Project files created successfully!"
-        )
-
-        st.subheader("Created Files")
-
-        for file_path in created_files:
-
-            st.write(
-                f"`{file_path}`"
-            )
-
-        main_file = Path("workspace/main.py")
-
-        if not main_file.exists():
-
-            python_files = [
-                Path(file_path)
-                for file_path in created_files
-                if str(file_path).endswith(".py")
             ]
+        )
 
-            if python_files:
-
-                main_file = python_files[0]
-
-            else:
-
-                st.warning(
-                    "No Python file was found to execute."
+        failed_tasks = len(
+            dataframe[
+                dataframe["status"].str.contains(
+                    "Failed",
+                    na=False
                 )
+            ]
+        )
 
-                st.stop()
 
-        st.subheader("Execution Result")
+        col1, col2, col3 = st.columns(3)
 
-        with st.spinner("Running generated project..."):
+        with col1:
 
-            execution_result = run_python_file(
-                main_file
+            st.metric(
+                "Total Tasks",
+                total_tasks
+            )
+
+        with col2:
+
+            st.metric(
+                "Completed",
+                completed_tasks
+            )
+
+        with col3:
+
+            st.metric(
+                "Failed",
+                failed_tasks
             )
 
 
-        if execution_result["success"]:
-
-            st.success(
-                "Project executed successfully!"
-            )
-
-            if execution_result["stdout"]:
-
-                st.code(
-                    execution_result["stdout"]
-                )
-
-        else:
-
-            st.error(
-                "Execution failed."
-            )
-
-            st.subheader("Detected Error")
-
-            st.code(
-                execution_result["stderr"]
-            )
-
-            with st.spinner(
-                "Mini Devin is fixing the error..."
-            ):
-
-                try:
-
-                    fixed_code = fix_python_project(
-                        task,
-                        generated_code,
-                        execution_result["stderr"]
-                    )
-
-                except Exception as error:
-
-                    st.error(
-                        "AI debugging failed."
-                    )
-
-                    st.code(str(error))
-
-                    st.stop()
+        st.divider()
 
 
-            st.success(
-                "AI generated a corrected project."
-            )
+        st.subheader(
+            "Task Status Distribution"
+        )
 
-            with st.expander(
-                "View Corrected Code"
-            ):
+        chart = create_status_chart()
 
-                st.markdown(fixed_code)
+        if chart is not None:
 
-            with st.spinner(
-                "Updating project files..."
-            ):
-
-                fixed_files = create_project_files(
-                    fixed_code,
-                    "workspace"
-                )
+            st.pyplot(chart)
 
 
-            st.success(
-                "Project files updated."
-            )
-            
-            with st.spinner(
-                "Running corrected project..."
-            ):
+        st.subheader(
+            "Task Data"
+        )
 
-                second_result = run_python_file(
-                    main_file
-                )
+        st.dataframe(
+            dataframe,
+            use_container_width=True
+        )
 
 
-            if second_result["success"]:
-
-                st.success(
-                    "Mini Devin fixed the project successfully!"
-                )
-
-                if second_result["stdout"]:
-
-                    st.subheader(
-                        "Final Output"
-                    )
-
-                    st.code(
-                        second_result["stdout"]
-                    )
-
-            else:
-
-                st.error(
-                    "The project still contains an error."
-                )
-
-                st.subheader(
-                    "Remaining Error"
-                )
-
-                st.code(
-                    second_result["stderr"]
-                )
-
+# --------------------------------------------------
+# Footer
+# --------------------------------------------------
 
 st.divider()
 
