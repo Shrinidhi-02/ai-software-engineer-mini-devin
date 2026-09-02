@@ -97,7 +97,7 @@ if page == "Software Engineer":
                 )
 
                 with st.expander(
-                    "📋 View Project Plan"
+                    "View Project Plan"
                 ):
 
                     st.markdown(
@@ -148,7 +148,7 @@ if page == "Software Engineer":
             if result["success"]:
 
                 st.success(
-                    "🎉 Project completed successfully!"
+                    "Project completed successfully!"
                 )
 
                 st.write(
@@ -158,7 +158,7 @@ if page == "Software Engineer":
                 if result["output"]:
 
                     st.subheader(
-                        "📤 Output"
+                        "Output"
                     )
 
                     st.code(
@@ -181,7 +181,7 @@ if page == "Software Engineer":
                 if result["error"]:
 
                     st.subheader(
-                        "🐛 Error"
+                        "Error"
                     )
 
                     st.code(
