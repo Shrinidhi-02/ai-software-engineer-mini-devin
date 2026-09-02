@@ -5,4 +5,4 @@ __pycache__/
 data/*.db
 workspace/*
 !workspace/.gitkeep
-.DS_Store
+.DS_Storemini_devin.db
