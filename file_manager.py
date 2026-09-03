@@ -1,25 +1,27 @@
+"""
+Mini Devin - File Manager
+
+Creates project files from generated AI/project code.
+"""
+
 from pathlib import Path
 import re
 
 
 def clean_code(code):
     """
-    Remove Markdown code fences from AI-generated code.
+    Remove Markdown code fences and END FILE markers
+    from generated code.
     """
 
     code = code.strip()
 
+    # Remove Markdown code fences
     code = re.sub(
-        r"^```python\s*",
+        r"^```(?:python)?\s*",
         "",
         code,
         flags=re.IGNORECASE
-    )
-
-    code = re.sub(
-        r"^```\s*",
-        "",
-        code
     )
 
     code = re.sub(
@@ -28,18 +30,32 @@ def clean_code(code):
         code
     )
 
+    # Remove accidental END FILE markers
+    code = re.sub(
+        r"^\s*END FILE\s*$",
+        "",
+        code,
+        flags=re.MULTILINE
+    )
+
     return code.strip()
 
 
-def create_project_files(generated_code, workspace="workspace"):
+def create_project_files(
+    generated_code,
+    workspace="workspace"
+):
     """
-    Create Python project files from AI-generated output.
+    Create project files from generated code.
 
-    Supports:
-    - main.py
-    - multiple Python files
-    - Markdown files
-    - text files
+    Expected format:
+
+    FILE: filename.py
+
+    CODE:
+    Python code
+
+    END FILE
     """
 
     workspace_path = Path(workspace)
@@ -52,14 +68,34 @@ def create_project_files(generated_code, workspace="workspace"):
     created_files = []
 
     # --------------------------------------------------
-    # Case 1: AI returns multiple files
+    # Make sure generated_code is text
     # --------------------------------------------------
 
-    file_blocks = re.findall(
-        r"(?:FILE|File):\s*([^\n]+)\n(.*?)(?=(?:\n(?:FILE|File):\s*)|\Z)",
-        generated_code,
-        flags=re.DOTALL
+    if not isinstance(generated_code, str):
+        raise TypeError(
+            "generated_code must be a string."
+        )
+
+    # --------------------------------------------------
+    # Extract FILE / CODE / END FILE blocks
+    # --------------------------------------------------
+
+    pattern = (
+        r"FILE:\s*(.+?)\s*\n"
+        r"CODE:\s*\n"
+        r"(.*?)"
+        r"\nEND FILE"
     )
+
+    file_blocks = re.findall(
+        pattern,
+        generated_code,
+        flags=re.DOTALL | re.IGNORECASE
+    )
+
+    # --------------------------------------------------
+    # Multiple files found
+    # --------------------------------------------------
 
     if file_blocks:
 
@@ -67,16 +103,26 @@ def create_project_files(generated_code, workspace="workspace"):
 
             filename = filename.strip()
 
-            # Remove Markdown formatting
+            # Remove Markdown backticks
             filename = filename.replace("`", "")
 
-            # Prevent paths from escaping workspace
+            # Keep only the filename
             filename = Path(filename).name
 
-            file_path = workspace_path / filename
+            # Skip empty filenames
+            if not filename:
+                continue
+
+            file_path = (
+                workspace_path / filename
+            )
+
+            cleaned_content = clean_code(
+                content
+            )
 
             file_path.write_text(
-                clean_code(content),
+                cleaned_content,
                 encoding="utf-8"
             )
 
@@ -86,16 +132,17 @@ def create_project_files(generated_code, workspace="workspace"):
 
         return created_files
 
-
     # --------------------------------------------------
-    # Case 2: AI returns normal Python code
+    # No FILE blocks
     # --------------------------------------------------
 
     cleaned_code = clean_code(
         generated_code
     )
 
-    main_file = workspace_path / "main.py"
+    main_file = (
+        workspace_path / "main.py"
+    )
 
     main_file.write_text(
         cleaned_code,

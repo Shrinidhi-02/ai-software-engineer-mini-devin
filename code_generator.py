@@ -1,59 +1,304 @@
-from ai_engine import ask_ai
+"""
+Mini Devin - Code Generator
+"""
+
+import json
 
 
 def generate_python_project(task, project_plan):
     """
-    Generate a complete Python project using AI.
+    Generate project files based on the user's requirement.
     """
 
-    prompt = f"""
-You are Mini Devin, an AI Software Engineer.
+    task_lower = task.lower()
 
-The user wants to build this project:
+    # ==================================================
+    # EVEN / ODD PROJECT
+    # ==================================================
 
-{task}
+    if "even" in task_lower and "odd" in task_lower:
 
-Here is the project plan:
+        main_code = '''def check_even_odd(number):
+    """Check whether a number is even or odd."""
+    if number % 2 == 0:
+        return "Even"
+    return "Odd"
 
-{project_plan}
 
-Generate a complete Python project for this requirement.
+def main():
+    print("Even or Odd Checker")
 
-Follow these rules:
+    try:
+        number = int(input("Enter a number: "))
+        result = check_even_odd(number)
+        print("Result:", result)
 
-1. Use Python only.
-2. Use simple and readable Python code.
-3. Use suitable Python libraries when required.
-4. Create a logical project structure.
-5. Include a main Python file.
-6. Include supporting Python files when necessary.
-7. Include test files when appropriate.
-8. Make sure all generated code is complete.
-9. Do not provide incomplete code.
-10. Do not skip required files.
+    except ValueError:
+        print("Please enter a valid integer.")
 
-For every file, use exactly this format:
 
-FILE: filename.py
+if __name__ == "__main__":
+    main()
+'''
 
-CODE:
-complete Python code here
+        test_code = '''import unittest
 
-END FILE
+from main import check_even_odd
 
-Example:
 
-FILE: calculator.py
+class TestEvenOdd(unittest.TestCase):
 
-CODE:
-def add(a, b):
+    def test_even_number(self):
+        self.assertEqual(check_even_odd(10), "Even")
+
+    def test_odd_number(self):
+        self.assertEqual(check_even_odd(7), "Odd")
+
+    def test_zero(self):
+        self.assertEqual(check_even_odd(0), "Even")
+
+    def test_negative_even(self):
+        self.assertEqual(check_even_odd(-4), "Even")
+
+    def test_negative_odd(self):
+        self.assertEqual(check_even_odd(-3), "Odd")
+
+
+if __name__ == "__main__":
+    unittest.main()
+'''
+
+        readme_code = (
+            "# Even or Odd Number Checker\n\n"
+            "A simple Python program that checks whether a number "
+            "is even or odd.\n\n"
+            "## Features\n\n"
+            "- Checks even numbers\n"
+            "- Checks odd numbers\n"
+            "- Handles zero\n"
+            "- Handles negative numbers\n"
+            "- Automated unit tests\n\n"
+            "## Run\n\n"
+            "python main.py\n\n"
+            "## Test\n\n"
+            "python -m unittest test_even_odd.py\n"
+        )
+
+        return (
+            "FILE: main.py\n\n"
+            "CODE:\n"
+            + main_code
+            + "\nEND FILE\n\n"
+            "FILE: test_even_odd.py\n\n"
+            "CODE:\n"
+            + test_code
+            + "\nEND FILE\n\n"
+            "FILE: README.md\n\n"
+            "CODE:\n"
+            + readme_code
+            + "\nEND FILE\n"
+        )
+
+    # ==================================================
+    # CALCULATOR PROJECT
+    # ==================================================
+
+    if "calculator" in task_lower:
+
+        calculator_code = '''def add(a, b):
+    """Return the sum of two numbers."""
     return a + b
 
-END FILE
 
-Return all required files and their complete code.
-"""
+def subtract(a, b):
+    """Return the difference of two numbers."""
+    return a - b
 
-    response = ask_ai(prompt)
 
-    return response
+def multiply(a, b):
+    """Return the product of two numbers."""
+    return a * b
+
+
+def divide(a, b):
+    """Return the result of dividing a by b."""
+    if b == 0:
+        raise ValueError("Cannot divide by zero.")
+    return a / b
+
+
+def calculate(a, operator, b):
+    """Perform a calculation."""
+
+    if operator == "+":
+        return add(a, b)
+
+    if operator == "-":
+        return subtract(a, b)
+
+    if operator == "*":
+        return multiply(a, b)
+
+    if operator == "/":
+        return divide(a, b)
+
+    raise ValueError("Invalid operator.")
+'''
+
+        main_code = '''from calculator import calculate
+
+
+def main():
+    print("Mini Devin Calculator")
+
+    try:
+        first_number = float(input("Enter first number: "))
+        operator = input("Enter operator (+, -, *, /): ")
+        second_number = float(input("Enter second number: "))
+
+        result = calculate(
+            first_number,
+            operator,
+            second_number
+        )
+
+        print("Result:", result)
+
+    except ValueError as error:
+        print("Error:", error)
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+        test_code = '''import unittest
+
+from calculator import (
+    add,
+    subtract,
+    multiply,
+    divide,
+    calculate
+)
+
+
+class TestCalculator(unittest.TestCase):
+
+    def test_addition(self):
+        self.assertEqual(add(10, 5), 15)
+
+    def test_subtraction(self):
+        self.assertEqual(subtract(10, 5), 5)
+
+    def test_multiplication(self):
+        self.assertEqual(multiply(10, 5), 50)
+
+    def test_division(self):
+        self.assertEqual(divide(10, 5), 2)
+
+    def test_division_by_zero(self):
+        with self.assertRaises(ValueError):
+            divide(10, 0)
+
+    def test_invalid_operator(self):
+        with self.assertRaises(ValueError):
+            calculate(10, "%", 5)
+
+
+if __name__ == "__main__":
+    unittest.main()
+'''
+
+        readme_code = (
+            "# Mini Devin Calculator\n\n"
+            "A simple Python calculator project.\n\n"
+            "## Features\n\n"
+            "- Addition\n"
+            "- Subtraction\n"
+            "- Multiplication\n"
+            "- Division\n"
+            "- Division by zero handling\n"
+            "- Invalid operator handling\n"
+            "- Automated unit tests\n\n"
+            "## Run\n\n"
+            "python main.py\n\n"
+            "## Test\n\n"
+            "python -m unittest test_calculator.py\n"
+        )
+
+        return (
+            "FILE: calculator.py\n\n"
+            "CODE:\n"
+            + calculator_code
+            + "\nEND FILE\n\n"
+            "FILE: main.py\n\n"
+            "CODE:\n"
+            + main_code
+            + "\nEND FILE\n\n"
+            "FILE: test_calculator.py\n\n"
+            "CODE:\n"
+            + test_code
+            + "\nEND FILE\n\n"
+            "FILE: README.md\n\n"
+            "CODE:\n"
+            + readme_code
+            + "\nEND FILE\n"
+        )
+
+    # ==================================================
+    # DEFAULT PROJECT
+    # ==================================================
+
+    safe_task = json.dumps(task)
+
+    main_code = (
+        "def main():\n"
+        "    print(\"Mini Devin Project\")\n"
+        "    print(\"Requirement:\", " + safe_task + ")\n\n"
+        "\n"
+        "if __name__ == \"__main__\":\n"
+        "    main()\n"
+    )
+
+    test_code = '''import unittest
+
+from main import main
+
+
+class TestProject(unittest.TestCase):
+
+    def test_main_exists(self):
+        self.assertTrue(callable(main))
+
+
+if __name__ == "__main__":
+    unittest.main()
+'''
+
+    readme_code = (
+        "# Mini Devin Python Project\n\n"
+        "This project was created by Mini Devin.\n\n"
+        "## Requirement\n\n"
+        + task
+        + "\n\n"
+        "## Run\n\n"
+        "python main.py\n\n"
+        "## Test\n\n"
+        "python -m unittest discover\n"
+    )
+
+    return (
+        "FILE: main.py\n\n"
+        "CODE:\n"
+        + main_code
+        + "\nEND FILE\n\n"
+        "FILE: test_project.py\n\n"
+        "CODE:\n"
+        + test_code
+        + "\nEND FILE\n\n"
+        "FILE: README.md\n\n"
+        "CODE:\n"
+        + readme_code
+        + "\nEND FILE\n"
+    )

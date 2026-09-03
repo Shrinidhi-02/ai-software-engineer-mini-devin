@@ -6,18 +6,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# OpenAI API key
-API_KEY = os.getenv("OPENAI_API_KEY")
+# Gemini API key
+API_KEY = os.getenv("GEMINI_API_KEY")
 
 
-# AI model
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
+# Gemini model
+MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 # Check whether API key exists
 def validate_config():
     if not API_KEY:
         raise ValueError(
-            "OPENAI_API_KEY is missing. "
+            "GEMINI_API_KEY is missing. "
             "Please add it to your .env file."
         )
