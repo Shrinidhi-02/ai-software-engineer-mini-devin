@@ -22,6 +22,9 @@ The objective of Mini Devin is to build an AI-assisted software engineering work
 * Project analytics and visualization
 * Task testing
 * Python-based web interface
+* Automated project validation
+* Error handling
+* Project status tracking
 
 ## Technologies Used
 
