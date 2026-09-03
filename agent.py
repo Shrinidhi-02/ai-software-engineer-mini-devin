@@ -6,20 +6,15 @@ from file_manager import create_project_files
 from executor import run_python_file
 from debugger import fix_python_project
 from database import save_task
+from tester import test_python_file
 
 
 def run_agent(task, max_attempts=2):
     """
-    Run the complete Mini Devin software engineering workflow.
+    Complete Mini Devin workflow.
 
-    Workflow:
-    1. Create project plan
-    2. Generate Python code
-    3. Create project files
-    4. Execute Python project
-    5. Detect errors
-    6. Ask AI to fix errors
-    7. Execute the corrected project
+    Plan → Generate → Create Files → Test → Execute
+    → Fix Error → Test Again → Execute
     """
 
     result = {
@@ -27,14 +22,17 @@ def run_agent(task, max_attempts=2):
         "project_plan": "",
         "generated_code": "",
         "created_files": [],
+        "test_passed": False,
+        "test_output": "",
+        "test_error": "",
         "output": "",
         "error": "",
         "attempts": 0
     }
 
-    # --------------------------------------------------
-    # Step 1: Project Planning
-    # --------------------------------------------------
+    # ================================================
+    # 1. CREATE PROJECT PLAN
+    # ================================================
 
     try:
         project_plan = create_project_plan(task)
@@ -52,10 +50,9 @@ def run_agent(task, max_attempts=2):
 
         return result
 
-
-    # --------------------------------------------------
-    # Step 2: Python Code Generation
-    # --------------------------------------------------
+    # ================================================
+    # 2. GENERATE PYTHON PROJECT
+    # ================================================
 
     try:
         generated_code = generate_python_project(
@@ -76,10 +73,9 @@ def run_agent(task, max_attempts=2):
 
         return result
 
-
-    # --------------------------------------------------
-    # Step 3: Create Project Files
-    # --------------------------------------------------
+    # ================================================
+    # 3. CREATE PROJECT FILES
+    # ================================================
 
     try:
         created_files = create_project_files(
@@ -100,12 +96,9 @@ def run_agent(task, max_attempts=2):
 
         return result
 
-
     if not created_files:
 
-        result["error"] = (
-            "No project files were created."
-        )
+        result["error"] = "No project files were created."
 
         save_task(
             task,
@@ -114,14 +107,11 @@ def run_agent(task, max_attempts=2):
 
         return result
 
+    # ================================================
+    # 4. FIND MAIN PYTHON FILE
+    # ================================================
 
-    # --------------------------------------------------
-    # Step 4: Find Main Python File
-    # --------------------------------------------------
-
-    main_file = Path(
-        "workspace/main.py"
-    )
+    main_file = Path("workspace/main.py")
 
     if not main_file.exists():
 
@@ -137,7 +127,7 @@ def run_agent(task, max_attempts=2):
         else:
 
             result["error"] = (
-                "No Python file was found to execute."
+                "No Python file was found."
             )
 
             save_task(
@@ -147,56 +137,68 @@ def run_agent(task, max_attempts=2):
 
             return result
 
-
-    # --------------------------------------------------
-    # Step 5: Execute and Fix
-    # --------------------------------------------------
-
     current_code = generated_code
+
+    # ================================================
+    # 5. TEST → EXECUTE → FIX LOOP
+    # ================================================
 
     for attempt in range(max_attempts):
 
         result["attempts"] = attempt + 1
 
-        execution_result = run_python_file(
+        # --------------------------------------------
+        # TEST
+        # --------------------------------------------
+
+        test_result = test_python_file(
             main_file
         )
 
+        result["test_passed"] = test_result["passed"]
+        result["test_output"] = test_result["output"]
+        result["test_error"] = test_result["error"]
 
-        # --------------------------------------------------
-        # Successful Execution
-        # --------------------------------------------------
+        # --------------------------------------------
+        # TEST PASSED
+        # --------------------------------------------
 
-        if execution_result["success"]:
+        if test_result["passed"]:
 
-            result["success"] = True
-
-            result["output"] = (
-                execution_result["stdout"]
+            execution_result = run_python_file(
+                main_file
             )
 
-            result["error"] = ""
+            # ----------------------------------------
+            # EXECUTION PASSED
+            # ----------------------------------------
 
-            save_task(
-                task,
-                "Completed"
-            )
+            if execution_result["success"]:
 
-            return result
+                result["success"] = True
+                result["output"] = execution_result["stdout"]
+                result["error"] = ""
 
+                save_task(
+                    task,
+                    "Completed"
+                )
 
-        # --------------------------------------------------
-        # Error Detected
-        # --------------------------------------------------
+                return result
 
-        result["error"] = (
-            execution_result["stderr"]
-        )
+            # ----------------------------------------
+            # EXECUTION FAILED
+            # ----------------------------------------
 
+            result["error"] = execution_result["stderr"]
 
-        # --------------------------------------------------
-        # Last Attempt
-        # --------------------------------------------------
+        else:
+
+            result["error"] = test_result["error"]
+
+        # --------------------------------------------
+        # NO MORE ATTEMPTS
+        # --------------------------------------------
 
         if attempt == max_attempts - 1:
 
@@ -207,17 +209,16 @@ def run_agent(task, max_attempts=2):
 
             return result
 
-
-        # --------------------------------------------------
-        # Ask AI to Fix the Error
-        # --------------------------------------------------
+        # ============================================
+        # 6. AI DEBUGGING
+        # ============================================
 
         try:
 
             fixed_code = fix_python_project(
                 task,
                 current_code,
-                execution_result["stderr"]
+                result["error"]
             )
 
             current_code = fixed_code
@@ -233,10 +234,9 @@ def run_agent(task, max_attempts=2):
 
             return result
 
-
-        # --------------------------------------------------
-        # Rewrite Corrected Files
-        # --------------------------------------------------
+        # ============================================
+        # 7. CREATE FIXED FILES
+        # ============================================
 
         try:
 
@@ -258,5 +258,34 @@ def run_agent(task, max_attempts=2):
 
             return result
 
+        # ============================================
+        # 8. FIND MAIN FILE AGAIN
+        # ============================================
+
+        main_file = Path("workspace/main.py")
+
+        if not main_file.exists():
+
+            python_files = [
+                Path(file_path)
+                for file_path in created_files
+                if str(file_path).endswith(".py")
+            ]
+
+            if python_files:
+                main_file = python_files[0]
+
+            else:
+
+                result["error"] = (
+                    "No Python file was found after fixing."
+                )
+
+                save_task(
+                    task,
+                    "No Python File After Fix"
+                )
+
+                return result
 
     return result
