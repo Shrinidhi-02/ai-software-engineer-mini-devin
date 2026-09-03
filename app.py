@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 # --------------------------------------------------
-# Database
+# Initialize Database
 # --------------------------------------------------
 
 create_tables()
@@ -30,7 +30,7 @@ st.title("AI Software Engineer - Mini Devin")
 
 st.write(
     "Mini Devin analyzes software requirements, creates project plans, "
-    "generates Python code, creates files, executes projects, "
+    "generates Python code, creates files, tests code, executes projects, "
     "and attempts to fix errors automatically."
 )
 
@@ -67,7 +67,6 @@ if page == "Software Engineer":
         ),
         height=180
     )
-
 
     if st.button("Build Python Project"):
 
@@ -142,8 +141,45 @@ if page == "Software Engineer":
 
 
             # ------------------------------------------
-            # Final Result
+            # Testing Result
             # ------------------------------------------
+
+            st.subheader(
+                "Automated Testing"
+            )
+
+            if result["test_passed"]:
+
+                st.success(
+                    "All tests passed."
+                )
+
+                if result["test_output"]:
+
+                    st.code(
+                        result["test_output"]
+                    )
+
+            else:
+
+                st.error(
+                    "Testing failed."
+                )
+
+                if result["test_error"]:
+
+                    st.code(
+                        result["test_error"]
+                    )
+
+
+            # ------------------------------------------
+            # Final Execution Result
+            # ------------------------------------------
+
+            st.subheader(
+                "Execution Result"
+            )
 
             if result["success"]:
 
@@ -158,7 +194,7 @@ if page == "Software Engineer":
                 if result["output"]:
 
                     st.subheader(
-                        "Output"
+                        "Final Output"
                     )
 
                     st.code(
@@ -261,6 +297,9 @@ elif page == "Analytics":
             ]
         )
 
+        # ------------------------------------------
+        # Metrics
+        # ------------------------------------------
 
         col1, col2, col3 = st.columns(3)
 
@@ -289,6 +328,10 @@ elif page == "Analytics":
         st.divider()
 
 
+        # ------------------------------------------
+        # Chart
+        # ------------------------------------------
+
         st.subheader(
             "Task Status Distribution"
         )
@@ -297,8 +340,14 @@ elif page == "Analytics":
 
         if chart is not None:
 
-            st.pyplot(chart)
+            st.pyplot(
+                chart
+            )
 
+
+        # ------------------------------------------
+        # Task Data
+        # ------------------------------------------
 
         st.subheader(
             "Task Data"
