@@ -1,62 +1,109 @@
-import os
+from pathlib import Path
+import re
 
 
-def create_project_files(generated_code, project_folder="workspace"):
+def clean_code(code):
     """
-    Create project files from AI-generated code.
-
-    Expected format:
-
-    FILE: filename.py
-
-    CODE:
-    code here
-
-    END FILE
+    Remove Markdown code fences from AI-generated code.
     """
 
-    os.makedirs(project_folder, exist_ok=True)
+    code = code.strip()
 
-    sections = generated_code.split("FILE:")
+    code = re.sub(
+        r"^```python\s*",
+        "",
+        code,
+        flags=re.IGNORECASE
+    )
+
+    code = re.sub(
+        r"^```\s*",
+        "",
+        code
+    )
+
+    code = re.sub(
+        r"\s*```$",
+        "",
+        code
+    )
+
+    return code.strip()
+
+
+def create_project_files(generated_code, workspace="workspace"):
+    """
+    Create Python project files from AI-generated output.
+
+    Supports:
+    - main.py
+    - multiple Python files
+    - Markdown files
+    - text files
+    """
+
+    workspace_path = Path(workspace)
+
+    workspace_path.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
     created_files = []
 
-    for section in sections[1:]:
-        lines = section.strip().splitlines()
+    # --------------------------------------------------
+    # Case 1: AI returns multiple files
+    # --------------------------------------------------
 
-        if not lines:
-            continue
+    file_blocks = re.findall(
+        r"(?:FILE|File):\s*([^\n]+)\n(.*?)(?=(?:\n(?:FILE|File):\s*)|\Z)",
+        generated_code,
+        flags=re.DOTALL
+    )
 
-        filename = lines[0].strip()
+    if file_blocks:
 
-        if "CODE:" not in lines:
-            continue
+        for filename, content in file_blocks:
 
-        code_start = lines.index("CODE:") + 1
+            filename = filename.strip()
 
-        code_lines = []
+            # Remove Markdown formatting
+            filename = filename.replace("`", "")
 
-        for line in lines[code_start:]:
-            if line.strip() == "END FILE":
-                break
+            # Prevent paths from escaping workspace
+            filename = Path(filename).name
 
-            code_lines.append(line)
+            file_path = workspace_path / filename
 
-        code = "\n".join(code_lines).strip()
+            file_path.write_text(
+                clean_code(content),
+                encoding="utf-8"
+            )
 
-        if not filename or not code:
-            continue
+            created_files.append(
+                str(file_path)
+            )
 
-        file_path = os.path.join(project_folder, filename)
+        return created_files
 
-        parent_folder = os.path.dirname(file_path)
 
-        if parent_folder:
-            os.makedirs(parent_folder, exist_ok=True)
+    # --------------------------------------------------
+    # Case 2: AI returns normal Python code
+    # --------------------------------------------------
 
-        with open(file_path, "w", encoding="utf-8") as file:
-            file.write(code + "\n")
+    cleaned_code = clean_code(
+        generated_code
+    )
 
-        created_files.append(file_path)
+    main_file = workspace_path / "main.py"
+
+    main_file.write_text(
+        cleaned_code,
+        encoding="utf-8"
+    )
+
+    created_files.append(
+        str(main_file)
+    )
 
     return created_files
